@@ -24,9 +24,9 @@
 #include "Vex_Competition_Includes.c"
 #include "general.h"
 #include "motion.h"
-#include "chassis.h"
 #include "lift.h"
 #include "manipulators.h"
+#include "chassis.h"
 #include "auton.h"
 #include "lcd.h"
 

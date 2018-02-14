@@ -37,6 +37,12 @@ task PIDLoop
 
 		if( chassisPIDEnabled )
 			chassisPID( ( SensorValue[ lEnc ] + SensorValue[ rEnc ] ) / 2, SensorValue[ gyro ] );
+		if( liftPIDEnabled )
+			setLift( PIDCalc( liftPIDValues, SensorValue[ liftPot ] ) );
+		if( chainbarPIDEnabled )
+			setChainbarSlew( PIDCalc( chainBarPIDValues, SensorValue[ chainbarEnc ] ));
+		if( mogoPIDEnabled )
+			setMogo( PIDCalc( mogoPIDValues, SensorValue[ mogoPot ] ) );
 
 		wait1Msec( 20 );
 
