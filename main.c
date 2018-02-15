@@ -36,6 +36,11 @@ void pre_auton()
 	bStopTasksBetweenModes = false;
 	bDisplayCompetitionStatusOnLcd = false;
 
+	PIDInit( distancePIDValues, 0, 0, 0, 0, 0, lEnc, 10, 10 );
+	PIDInit( turnPIDValues, 0, 0, 0, 0, 0, gyro, 10, 10 );
+	PIDInit( mogoPIDValues, 0, 0, 0, 0, 0, mogoPot, 10, 10 );
+	PIDInit( liftPIDValues, 0, 0, 0, 0, 0, liftPot, 10, 10 );
+
 }
 
 task autonomous()
@@ -47,6 +52,8 @@ task autonomous()
 
 task usercontrol()
 {
+
+	startTask( PIDLoop );
 
   while (true)
   {
