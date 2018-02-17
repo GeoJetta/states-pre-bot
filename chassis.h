@@ -3,7 +3,6 @@
 PID distancePIDValues;
 PID turnPIDValues;
 PID gyroPIDValues;
-PID liftPIDValues;
 PID chainBarPIDValues;
 PID mogoPIDValues;
 
@@ -63,6 +62,13 @@ task PIDLoop
 
 }
 
+float getDistance(  )
+{
+
+	return SensorValue[ CHASSIS_DISTANCE_SENSOR ] * CHASSIS_TICKS_PER_INCH;
+
+}
+
 void setDriveTarget( int iInches )
 {
 
@@ -74,5 +80,28 @@ void moveDriveTarget( int iInches )
 {
 
 	distancePIDValues.target += CHASSIS_TICKS_PER_INCH * iInches;
+
+}
+
+void mogoPickup( bool waitToDrive = false )
+{
+
+	mogoPIDValues.target = MOGO_DOWN_POS;
+
+	if( waitToDrive )
+		waitForPID( mogoPIDValues );
+
+	moveDriveTarget( 144 );
+
+	while( !SensorValue[ mogoTouch ] )
+		wait1Msec( 20 );
+
+	mogoPIDValues.target = MOGO_UP_POS;
+	while( !mogoPIDValues.complete )
+	{
+		//TEST THIS
+		setDriveTarget( getDistance() + ( MOGO_UP_POS - SensorValue[ mogoPot ] ) / 1000 );
+		wait1Msec( 20 );
+	}
 
 }

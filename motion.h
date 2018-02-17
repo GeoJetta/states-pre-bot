@@ -1,3 +1,5 @@
+#define CHASSIS_DISTANCE_SENSOR lEnc
+
 /**
  * PID controller data structure
  */
@@ -19,6 +21,7 @@ typedef struct {
 	float startStoppedTime;
 	bool complete;
 	float completeRange;
+	float deltaPV;
 
 } PID;
 
@@ -49,6 +52,7 @@ void PIDInit (	PID pid, float Kp, float Ki, float Kd, float innerIntegralBand, f
 	pid.startStoppedTime = 0.0;
 	pid.complete = false;
 	pid.completeRange = completeRange;
+	pid.deltaPV = 0;
 }
 
 /**
@@ -73,6 +77,7 @@ void PIDInitCopy (PID pid, PID toCopy) {
 	pid.startStoppedTime = 0.0;
 	pid.complete = false;
 	pid.completeRange = toCopy.completeRange;
+	pid.deltaPV = 0;
 }
 
 /**
@@ -96,6 +101,7 @@ float PIDCalc( PID pid )
 	if(deltaTime > 0)
 		deltaPV = ( PV - pid.lastValue) / deltaTime;
 	pid.lastValue = PV;
+	pid.deltaPV = deltaPV;
 
 	float error = pid.target - PV;
 
@@ -125,5 +131,13 @@ float PIDCalc( PID pid )
 		pid.complete = true;
 
 	return output;
+
+}
+
+void waitForPID( PID iPID )
+{
+
+	while( !iPID.complete )
+		wait1Msec( 20 );
 
 }
