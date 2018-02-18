@@ -69,14 +69,14 @@ float getDistance(  )
 
 }
 
-void setDriveTarget( int iInches )
+void setDriveTarget( float iInches )
 {
 
 	distancePIDValues.target = CHASSIS_TICKS_PER_INCH * iInches;
 
 }
 
-void moveDriveTarget( int iInches )
+void moveDriveTarget( float iInches )
 {
 
 	distancePIDValues.target += CHASSIS_TICKS_PER_INCH * iInches;
@@ -104,4 +104,23 @@ void mogoPickup( bool waitToDrive = false )
 		wait1Msec( 20 );
 	}
 
+}
+
+//Typed in GitHub - test in RobotC
+void driveArc( float radius, float degrees )
+{
+	
+	startDist = getDistance();
+	startAngle = SensorValue[ gyro ];
+	
+	circumference = 2*PI * radius;
+	arcLength = circumference * ( degrees / 360 );
+	moveDriveTarget( arcLength );
+	while( !distancePIDValues.complete )
+	{
+		
+		turnPIDValues.target = map( getDistance(), startDist, startDist + arcLength, startAngle, startAngle + degrees );
+		wait1MSec( 50 );
+		
+	}
 }
