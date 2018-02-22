@@ -3,15 +3,15 @@
 PID distancePIDValues;
 PID turnPIDValues;
 PID gyroPIDValues;
-PID chainBarPIDValues;
-PID mogoPIDValues;
 
 void setChassis( int lPwr, int rPwr )
 {
 
-	motor[ fL ] = motor[ bL ] = lPwr;
+	motor[ frontLeftChassis ]		=
+	motor[ backLeftChassis ] 		= lPwr;
 
-	motor[ fR ] = motor[ bR ] = rPwr;
+	motor[ frontRightChassis ]	=
+	motor[ backRightChassis ] 	= rPwr;
 
 }
 
@@ -51,7 +51,7 @@ task PIDLoop
 			setLift( PIDCalc( liftPIDValues ) );
 
 		if( chainbarPIDEnabled )
-			setChainbar( PIDCalc( chainBarPIDValues ) );
+			setChainbar( PIDCalc( chainbarPIDValues ) );
 
 		if( mogoPIDEnabled )
 			setMogo( PIDCalc( mogoPIDValues ) );
@@ -93,7 +93,8 @@ void mogoPickup( bool waitToDrive = false )
 
 	moveDriveTarget( 144 );
 
-	while( !SensorValue[ mogoTouch ] )
+	//TODO: Add back in once we have the sensor mounted
+	//while( !SensorValue[ mogoTouch ] )
 		wait1Msec( 20 );
 
 	mogoPIDValues.target = MOGO_UP_POS;
@@ -102,25 +103,27 @@ void mogoPickup( bool waitToDrive = false )
 		//TEST THIS
 		setDriveTarget( getDistance() + ( MOGO_UP_POS - SensorValue[ mogoPot ] ) / 1000 );
 		wait1Msec( 20 );
+
 	}
 
 }
 
-//Typed in GitHub - test in RobotC
 void driveArc( float radius, float degrees )
 {
-	
-	startDist = getDistance();
-	startAngle = SensorValue[ gyro ];
-	
-	circumference = 2*PI * radius;
-	arcLength = circumference * ( degrees / 360 );
+
+	float startDist = getDistance();
+	float startAngle = SensorValue[ gyro ];
+
+	float circumference = 2*PI * radius;
+	float arcLength = circumference * ( degrees / 360 );
+
 	moveDriveTarget( arcLength );
 	while( !distancePIDValues.complete )
 	{
-		
+
 		turnPIDValues.target = map( getDistance(), startDist, startDist + arcLength, startAngle, startAngle + degrees );
-		wait1MSec( 50 );
-		
+		wait1Msec( 50 );
+
 	}
+
 }

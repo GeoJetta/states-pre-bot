@@ -1,4 +1,4 @@
-#define CHASSIS_DISTANCE_SENSOR lEnc
+#define CHASSIS_DISTANCE_SENSOR driveEncoder
 
 /**
  * PID controller data structure
