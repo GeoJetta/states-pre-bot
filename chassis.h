@@ -1,7 +1,6 @@
-#define CHASSIS_TICKS_PER_INCH 999999
+#define CHASSIS_TICKS_PER_INCH 28.426
 
 PID distancePIDValues;
-PID turnPIDValues;
 PID gyroPIDValues;
 
 void setChassis( int lPwr, int rPwr )
@@ -29,14 +28,11 @@ void chassisPID(  )
 	if( turnPIDEnabled )
 		turn = PIDCalc( gyroPIDValues );
 
-	setChassis( straight + turn, straight - turn );
+	setChassis( straight - turn, straight + turn );
 
 }
 
 bool chassisPIDEnabled = false;
-bool liftPIDEnabled = false;
-bool chainbarPIDEnabled = false;
-bool mogoPIDEnabled = false;
 
 task PIDLoop
 {
@@ -51,7 +47,7 @@ task PIDLoop
 			setLift( PIDCalc( liftPIDValues ) );
 
 		if( chainbarPIDEnabled )
-			setChainbar( PIDCalc( chainbarPIDValues ) );
+			setChainbar( PIDCalc( chainbarPIDValues ) + CHAINBAR_HOLD_POWER);
 
 		if( mogoPIDEnabled )
 			setMogo( PIDCalc( mogoPIDValues ) );
@@ -112,16 +108,16 @@ void driveArc( float radius, float degrees )
 {
 
 	float startDist = getDistance();
-	float startAngle = SensorValue[ gyro ];
+	float startAngle = SensorValue[ gyro ] / 10;
 
-	float circumference = 2*PI * radius;
-	float arcLength = circumference * ( degrees / 360 );
+	float circumference = 2.00*PI * radius;
+	float arcLength = circumference * ( degrees / 360.00 );
 
 	moveDriveTarget( arcLength );
 	while( !distancePIDValues.complete )
 	{
 
-		turnPIDValues.target = map( getDistance(), startDist, startDist + arcLength, startAngle, startAngle + degrees );
+		gyroPIDValues.target = 10* map( getDistance(), startDist, startDist + arcLength, startAngle, startAngle + degrees );
 		wait1Msec( 50 );
 
 	}

@@ -11,10 +11,11 @@ PID liftPIDValues;
 #define LIFT_HORIZONTAL_DEG map( LIFT_HORIZONTAL_POS, 4095, 0, 0, 250 )
 #define LIFT_MAX_HEIGHT 40 //TODO
 #define LIFT_MIN_HEIGHT 9.0
+#define LIFT_LOADER_POS 2730
 
 #define LIFT_SENSOR liftPot
 
-#define ULTRASONIC_BASELINE 100 //TODO
+#define ULTRASONIC_BASELINE 368 //TODO
 
 void setLift( int pwr )
 {
@@ -37,7 +38,13 @@ float getLiftHeight(  )
 void setLiftHeight( float iInches )
 {
 
-	float theta =	radiansToDegrees( asin( ( (iInches - TOWER_HEIGHT - SECONDARY_TOWER_HEIGHT)/2 ) /
+	float theta;
+
+	if( iInches > 27 )
+		theta =	radiansToDegrees( asin( ( ( iInches - TOWER_HEIGHT - SECONDARY_TOWER_HEIGHT )*0.5 ) /
+								(float)FOUR_BAR_LENGTH ) );
+	else
+		theta =	-radiansToDegrees( asin( ( ( 27 - iInches - TOWER_HEIGHT - SECONDARY_TOWER_HEIGHT )*0.5 ) /
 								(float)FOUR_BAR_LENGTH ) );
 
 	liftPIDValues.target = map( theta, 0, 250, 4095, 0 ) - LIFT_HORIZONTAL_POS;
@@ -47,12 +54,70 @@ void setLiftHeight( float iInches )
 void liftToStack(  )
 {
 
-	setLiftHeight( LIFT_MAX_HEIGHT );
+	int l1 = 0;
+	int l2 = 0;
+	int l3 = 0;
+	int l4 = 0;
+	int l5 = 0;
+	int l6 = 0;
 
-	while( fabs( ULTRASONIC_BASELINE - SensorValue[ stackDetect ] ) > 5 )
+	float ultraAvg = (SensorValue[ stackDetect ]*2 + l1 + l2 + l3) / 5;
+
+	liftPIDValues.target = LIFT_MAX_POS;
+
+	while( ultraAvg < 280 )
+	{
+
+		wait1Msec( 50 );
+
+		l6 = l5;
+		l5 = l4;
+		l4 = l3;
+		l3 = l2;
+		l2 = l1;
+		l1 = SensorValue[ stackDetect ];
+
+		ultraAvg = ( SensorValue[ stackDetect ]*2 + l1 + l2 + l3) / 5;
+
+	}
+
+	while( SensorValue[ liftPot ] > 2660 )
 		wait1Msec( 20 );
 
 	//TEST AND TUNE
-	liftPIDValues.target = LIFT_SENSOR + liftPIDValues.deltaPV;
+	//if( SensorValue[ liftPot ] > LIFT_HORIZONTAL_POS - 100 )
+		liftPIDValues.target = 	SensorValue[ LIFT_SENSOR ];
+	//else if( SensorValue[ liftPot ] > 1500 )
+	//	setLiftHeight( getLiftHeight() );
+	//else if( SensorValue[ liftPot ] > 1000 )
+	//	setLiftHeight( getLiftHeight() );
+	//else
+	//	setLiftHeight( getLiftHeight() + 2 );
+
+}
+
+void liftToStackLoop(  )
+{
+
+	bool wasHit = false;
+	int hitVal = 0;
+
+	if( fabs( ULTRASONIC_BASELINE - SensorValue[ stackDetect ] ) > 50 )
+	{
+
+		wasHit = false;
+		liftPIDValues.target = LIFT_MAX_POS;
+
+	}
+	else
+	{
+
+		if( !wasHit )
+			hitVal = SensorValue[ LIFT_SENSOR ];
+		//TEST AND TUNE
+		liftPIDValues.target = hitVal;
+		wasHit = true;
+
+	}
 
 }

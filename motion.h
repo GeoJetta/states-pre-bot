@@ -123,6 +123,7 @@ float PIDCalc( PID pid )
 	{
 
 		pid.stopped = false;
+		pid.complete = false;
 		pid.startStoppedTime = 0.0;
 
 	}

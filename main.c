@@ -8,9 +8,9 @@
 #pragma config(Motor,  port1,           mogo,          tmotorVex393TurboSpeed_HBridge, openLoop)
 #pragma config(Motor,  port2,           backLeftChassis, tmotorVex393HighSpeed_MC29, openLoop)
 #pragma config(Motor,  port3,           frontLeftChassis, tmotorVex393HighSpeed_MC29, openLoop)
-#pragma config(Motor,  port4,           rChainbar,     tmotorVex393_MC29, openLoop, reversed)
+#pragma config(Motor,  port4,           rChainbar,     tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port5,           rLift,         tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port6,           lChainbar,     tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port6,           lChainbar,     tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port7,           lLift,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           frontRightChassis, tmotorVex393HighSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port9,           backRightChassis, tmotorVex393HighSpeed_MC29, openLoop, reversed)
@@ -36,18 +36,27 @@ TODO:
 - tune PID values
 
 */
-
+int gyroScale = 139;
 void pre_auton()
 {
 
 	bStopTasksBetweenModes = false;
 	bDisplayCompetitionStatusOnLcd = false;
 
-	PIDInit( distancePIDValues, 0, 0, 0, 0, 0, CHASSIS_DISTANCE_SENSOR, 10, 10 );
-	PIDInit( turnPIDValues, 0, 0, 0, 0, 0, gyro, 10, 10 );
+	PIDInit( distancePIDValues, 0.2, 0, 0, 0, 0, CHASSIS_DISTANCE_SENSOR, 10, 70 );
+	PIDInit( gyroPIDValues, 0.6, 0, 0.05, 0, 0, gyro, 10, 10 );
 	PIDInit( mogoPIDValues, 0, 0, 0, 0, 0, mogoPot, 10, 10 );
-	PIDInit( liftPIDValues, -0.6, 0, -0.1, 0, 0, LIFT_SENSOR, 10, 10 );
-	PIDInit( chainbarPIDValues, -0.1, 0, 0, 0, 0, chainbarPot, 10, 10 );
+	PIDInit( liftPIDValues, -0.2, 0, -0.02, 0, 0, LIFT_SENSOR, 10, 10 );
+	PIDInit( chainbarPIDValues, 0.2, 0, 0.01, 0, 0, chainbarPot, 10, 10 );
+
+	SensorType[ gyro ] = sensorNone;
+	wait1Msec(1000);
+	SensorType[ gyro ] = sensorGyro;
+	wait1Msec(1100);
+
+	SensorScale[gyro] = gyroScale;
+
+	SensorValue[ driveEncoder ] = 0;
 
 }
 
@@ -58,51 +67,19 @@ task autonomous()
 
 }
 
-float liftVal;
-float liftVal2 = 30;
-float liftVal3;
 
 task usercontrol()
 {
 
 	startTask( PIDLoop );
 
-	liftPIDEnabled = true;
-
   while (true)
   {
 
-  	liftVal = getLiftHeight();
+  	driverLift(  );
+  	setChassis( deadzone( vexRT[ Ch3 ], 10 ), deadzone( vexRT[ Ch2 ], 10 ) );
 
-  	setLiftHeight( liftVal2 );
-
-  	//driverLift(  );
-  //	setChassis( vexRT[ Ch3 ], vexRT[ Ch2 ] );
-
-		//if( toggled2.b8D )
-		//{
-
-		//	chainbarPIDEnabled = true;
-		//	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
-
-		//}
-		//if( deadzone( vexRT[ Ch2Xmtr2 ] ) != 0 &&
-		//		!( SensorValue[ chainbarPot ] < 1100 && deadzone( vexRT[ Ch2Xmtr2 ] ) < 0 ) )
-	 // {
-
-	 // 	chainbarPIDEnabled = false;
-	 // 	toggled2.b8D = false;
-	 // 	setChainbar( -vexRT[ Ch2Xmtr2 ] );
-
-	 // }
-	 // else if( !toggled2.b8D )
-	 // 	setChainbar( -18 );
-
-	 // setLift( deadzone( vexRT[ Ch3Xmtr2 ] ) );
-	 // motor[ intake ] = vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 + 15;
-		//motor[ mogo ] = vexRT[ Btn7UXmtr2 ] * 127 - vexRT[ Btn7DXmtr2 ] * 127;
-
-	 // updateAllBtnToggle();
+	  updateAllBtnToggle();
 
   	wait1Msec( 20 );
 
