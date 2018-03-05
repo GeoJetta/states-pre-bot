@@ -15,13 +15,17 @@ typedef struct {
 	unsigned long lastTime;
 	float lastSetPoint;
 	int target;
+	int lastTarget;
 	tSensors errorSource;
 	bool stopped;
 	float stoppedRange;
-	float startStoppedTime;
+	unsigned long startStoppedTime;
 	bool complete;
 	float completeRange;
 	float deltaPV;
+	bool stuck;
+	unsigned long targetChangedTime;
+	float stuckRange;
 
 } PID;
 
@@ -36,7 +40,7 @@ typedef struct {
  * @param outerIntegralBand  outer bound of PID I summing cutoff
  */
 void PIDInit (	PID pid, float Kp, float Ki, float Kd, float innerIntegralBand, float outerIntegralBand,
-								tSensors iErrorSource, float iRange, float completeRange ) {
+								tSensors iErrorSource, float iRange, float completeRange, float stuckRange ) {
 	pid.Kp = Kp;
 	pid.Ki = Ki;
 	pid.Kd = Kd;
@@ -46,13 +50,17 @@ void PIDInit (	PID pid, float Kp, float Ki, float Kd, float innerIntegralBand, f
 	pid.lastValue = 0;
 	pid.lastTime = nPgmTime;
 	pid.target = 0;
+	pid.lastTarget = 0;
 	pid.stopped = false;
 	pid.errorSource = iErrorSource;
 	pid.stoppedRange = iRange;
-	pid.startStoppedTime = 0.0;
+	pid.startStoppedTime = 0;
 	pid.complete = false;
 	pid.completeRange = completeRange;
 	pid.deltaPV = 0;
+	pid.stuck = false;
+	pid.targetChangedTime = 0;
+	pid.stuckRange = stuckRange;
 }
 
 /**
@@ -68,16 +76,20 @@ void PIDInitCopy (PID pid, PID toCopy) {
 	pid.innerIntegralBand = toCopy.innerIntegralBand;
 	pid.outerIntegralBand = toCopy.outerIntegralBand;
 	pid.target = toCopy.target;
+	pid.lastTarget = toCopy.lastTarget;
 	pid.errorSource = toCopy.errorSource;
 	pid.stoppedRange = toCopy.stoppedRange;
 	pid.sigma = 0;
 	pid.lastValue = 0;
 	pid.stopped = false;
 	pid.lastTime = nPgmTime;
-	pid.startStoppedTime = 0.0;
+	pid.startStoppedTime = 0;
 	pid.complete = false;
 	pid.completeRange = toCopy.completeRange;
 	pid.deltaPV = 0;
+	pid.stuck = false;
+	pid.targetChangedTime = 0;
+	pid.stuckRange = toCopy.stuckRange;
 }
 
 /**
@@ -131,14 +143,33 @@ float PIDCalc( PID pid )
 	if( fabs( error ) < pid.completeRange && pid.stopped )
 		pid.complete = true;
 
-	return output;
+	unsigned long timeSinceTargetChange = nPgmTime - pid.targetChangedTime;
+
+	if( pid.lastTarget != pid.target )
+	{
+		pid.stuck = false;
+		pid.targetChangedTime = nPgmTime;
+	}
+	else if(	abs( error ) > pid.stuckRange
+						&& pid.stopped && timeSinceTargetChange > 500 )
+		pid.stuck = true;
+	else if( timeSinceTargetChange > 500 && pid.stuck )
+		pid.stuck = true;
+	else
+		pid.stuck = false;
+
+	pid.lastTarget = pid.target;
+
+	return output*!pid.stuck;
 
 }
 
 void waitForPID( PID iPID )
 {
 
-	while( !iPID.complete )
+	wait1Msec( 50 );
+
+	while( !iPID.complete || -iPID.startStoppedTime + nPgmTime > 100 )
 		wait1Msec( 20 );
 
 }

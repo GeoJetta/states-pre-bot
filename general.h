@@ -33,6 +33,16 @@ int capMinMax( int value, int minValue = 0, int maxValue )
 
 }
 
+int isAbove( int val, int cutOff )
+{
+
+	if( val > cutOff )
+		return 0;
+
+	return 1;
+
+}
+
 float map( float value, float start1, float stop1, float start2, float stop2 )
 {
 

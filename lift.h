@@ -4,8 +4,8 @@ PID liftPIDValues;
 #define TOWER_HEIGHT 17.0
 #define SECONDARY_TOWER_HEIGHT 11.0
 #define LIFT_HORIZONTAL_POS 2000
-#define LIFT_MIN_POS 2730 //TODO
-#define LIFT_MAX_POS 980 //TODO
+#define LIFT_MIN_POS 2690 //TODO
+#define LIFT_MAX_POS 910 //TODO
 #define LIFT_MIN_DEG 0 //TODO - integrate into height map (might not be 250 degrees exactly)
 #define LIFT_MAX_DEG 90 //TODO
 #define LIFT_HORIZONTAL_DEG map( LIFT_HORIZONTAL_POS, 4095, 0, 0, 250 )
@@ -51,50 +51,7 @@ void setLiftHeight( float iInches )
 
 }
 
-void liftToStack(  )
-{
 
-	int l1 = 0;
-	int l2 = 0;
-	int l3 = 0;
-	int l4 = 0;
-	int l5 = 0;
-	int l6 = 0;
-
-	float ultraAvg = (SensorValue[ stackDetect ]*2 + l1 + l2 + l3) / 5;
-
-	liftPIDValues.target = LIFT_MAX_POS;
-
-	while( ultraAvg < 280 )
-	{
-
-		wait1Msec( 50 );
-
-		l6 = l5;
-		l5 = l4;
-		l4 = l3;
-		l3 = l2;
-		l2 = l1;
-		l1 = SensorValue[ stackDetect ];
-
-		ultraAvg = ( SensorValue[ stackDetect ]*2 + l1 + l2 + l3) / 5;
-
-	}
-
-	while( SensorValue[ liftPot ] > 2660 )
-		wait1Msec( 20 );
-
-	//TEST AND TUNE
-	//if( SensorValue[ liftPot ] > LIFT_HORIZONTAL_POS - 100 )
-		liftPIDValues.target = 	SensorValue[ LIFT_SENSOR ];
-	//else if( SensorValue[ liftPot ] > 1500 )
-	//	setLiftHeight( getLiftHeight() );
-	//else if( SensorValue[ liftPot ] > 1000 )
-	//	setLiftHeight( getLiftHeight() );
-	//else
-	//	setLiftHeight( getLiftHeight() + 2 );
-
-}
 
 void liftToStackLoop(  )
 {
