@@ -36,7 +36,7 @@ void setChainbar( int pwr )
 
 }
 
-void setIntake( int pwr )
+void setIntake( int pwr, bool actuallySet = true )
 {
 
 	motor[ intake ] = pwr;
@@ -116,7 +116,7 @@ task stackLoaderTask
 
 }
 
-int lastLiftPoint = LIFT_MIN_POS;
+int lastLiftPoint = 4000;
 
 void liftToStack(  )
 {
@@ -132,19 +132,33 @@ void liftToStack(  )
 
 	liftPIDValues.target = LIFT_MAX_POS - 200;
 
-	while( ultraAvg < 280 || SensorValue[ LIFT_SENSOR ] > lastLiftPoint + 300)
+	if( lastLiftPoint < LIFT_MIN_POS + 200 )
 	{
 
-		wait1Msec( 50 );
+		while( ultraAvg < 280 /*|| SensorValue[ LIFT_SENSOR ] > lastLiftPoint + 1200*/ )
+		{
 
-		l6 = l5;
-		l5 = l4;
-		l4 = l3;
-		l3 = l2;
-		l2 = l1;
-		l1 = SensorValue[ stackDetect ];
+			wait1Msec( 50 );
 
-		ultraAvg = ( SensorValue[ stackDetect ]*2 + l1 + l2 + l3 + l4 + l5 ) / 7;
+			l6 = l5;
+			l5 = l4;
+			l4 = l3;
+			l3 = l2;
+			l2 = l1;
+			l1 = SensorValue[ stackDetect ];
+
+			ultraAvg = ( SensorValue[ stackDetect ]*2 + l1 + l2 + l3 + l4 + l5 ) / 7;
+
+		}
+
+	}
+	else
+	{
+
+		while( SensorValue[ stackDetect ] < 280 )
+		{
+			wait1Msec( 50 );
+		}
 
 	}
 
@@ -156,11 +170,13 @@ void liftToStack(  )
 	if( SensorValue[ liftPot ] < 1500 )
 		chainbarPIDValues.target = CHAINBAR_SCORE_POS - 200;
 	else
-		chainbarPIDValues.target = CHAINBAR_SCORE_POS - 200;
+		chainbarPIDValues.target = CHAINBAR_SCORE_POS/* - 200*/;
 
 	//TEST AND TUNE
-	//if( SensorValue[ liftPot ] > LIFT_HORIZONTAL_POS - 100 )
+	if( SensorValue[ liftPot ] < LIFT_MAX_POS + 100 )
 		liftPIDValues.target = 	SensorValue[ LIFT_SENSOR ] + 100;
+	else
+		liftPIDValues.target = 	SensorValue[ LIFT_SENSOR ] - 50;
 	//else if( SensorValue[ liftPot ] > 1500 )
 	//	setLiftHeight( getLiftHeight() );
 	//else if( SensorValue[ liftPot ] > 1000 )
@@ -219,13 +235,17 @@ void driverTestStack( )
 	chainbarPIDValues.target = CHAINBAR_IDLE_DOWN_POS;
 	liftToStack();
 
-	if( SensorValue[ liftPot ] > LIFT_MIN_POS - 300 )
+	if( false /*SensorValue[ liftPot ] > LIFT_MIN_POS - 300*/ )
 		stack(  );
 	else
 	{
 
-		while( SensorValue[ chainbarPot ] < CHAINBAR_SCORE_POS - 700 )
-			wait1Msec( 20 );
+		if( SensorValue[ liftPot ] < LIFT_MAX_POS + 100 )
+			while( SensorValue[ chainbarPot ] < CHAINBAR_SCORE_POS - 200 )
+				wait1Msec( 20 );
+		else
+			while( SensorValue[ chainbarPot ] < CHAINBAR_SCORE_POS - 700 )
+				wait1Msec( 20 );
 
 		testDrop();
 
@@ -251,7 +271,7 @@ void driverTestStack( )
 
 }
 
-void autonStack( bool driving = false )
+void autonStack( bool driving = false, bool last = false )
 {
 
 	chainbarPIDValues.target = CHAINBAR_IDLE_UP_POS;
@@ -280,14 +300,17 @@ void autonStack( bool driving = false )
 	while( SensorValue[ chainbarPot ] > CHAINBAR_IDLE_UP_POS + 250 )
 		wait1Msec( 20 );
 
-	liftPIDValues.target = LIFT_MIN_POS + 250;
+	if( !last )
+		liftPIDValues.target = LIFT_MIN_POS + 250;
+	else
+		liftPIDValues.target = LIFT_HORIZONTAL_POS - 400;
 
 	wait1Msec( 500 );
 
 	setIntake( 0 );
-
-	while( SensorValue[ LIFT_SENSOR ] < LIFT_MIN_POS - 150 )
-		wait1Msec( 20 );
+	if( !last )
+		while( SensorValue[ LIFT_SENSOR ] < LIFT_MIN_POS - 150 )
+			wait1Msec( 20 );
 
 }
 
@@ -296,11 +319,11 @@ void thatOneCone()
 
 	chainbarPIDValues.target = CHAINBAR_IDLE_UP_POS;
 	liftPIDValues.target = 2400;
-	while( SensorValue[ LIFT_SENSOR ] > 2550 )
+	while( SensorValue[ LIFT_SENSOR ] > 2500 )
 		wait1Msec( 20 );
 
-	chainbarPIDValues.target = CHAINBAR_SCORE_POS - 350;
-	while( SensorValue[ chainbarPot ] < CHAINBAR_SCORE_POS - 500 )
+	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
+	while( SensorValue[ chainbarPot ] < CHAINBAR_SCORE_POS - 100 )
 		wait1Msec( 20 );
 
 	liftPIDValues.target += 400;
@@ -411,7 +434,7 @@ void driverLift(  )
 		motor[ mogo ] = vexRT[ Btn7UXmtr2 ] * 127 - vexRT[ Btn7DXmtr2 ] * 127;
 
 	if( vexRT[ Btn7UXmtr2 ] || vexRT[ Btn7DXmtr2 ] || vexRT[ Btn7LXmtr2 ] )
-		lastLiftPoint = LIFT_MIN_POS;
+		lastLiftPoint = 4000;
 
 	if( toggled2.b8R )
 		presetOn = false;
@@ -520,7 +543,7 @@ void driverLift(  )
   		if( SensorValue[ LIFT_SENSOR ] > 1400 )
 				chainbarPIDValues.target = CHAINBAR_SCORE_POS;
 			else
-				chainbarPIDValues.target = CHAINBAR_SCORE_POS + 250;
+				chainbarPIDValues.target = CHAINBAR_SCORE_POS;
   	else
   		chainbarPIDValues.target = CHAINBAR_STAT_POS;
 
@@ -534,5 +557,136 @@ void driverLift(  )
   	chainbarPIDValues.target = CHAINBAR_LOADER_POS;
 
  	}
+
+}
+
+enum stateControl
+{
+
+	MANUAL,
+	STACKER,
+	LOADER,
+	LOADER_LINEUP,
+	STAT
+
+};
+
+enum stateControl state = MANUAL;
+
+void stateRun( enum stateControl lastState );
+
+void stateSwitch()
+{
+
+	static enum stateControl lastState = MANUAL;
+
+	lastState = state;
+
+	bool liftButton = deadzone( vexRT[ Ch3Xmtr2 ] ) == 0 ? false : true;
+	bool chainButton = deadzone( vexRT[ Ch2Xmtr2 ] ) == 0 ? false : true;
+
+	if( chainButton || ( liftButton && state > MANUAL && state < STAT ) )
+		state = MANUAL;
+	else if( vexRT[ Btn8LXmtr2 ] )
+		state = LOADER;
+	else if( vexRT[ Btn8DXmtr2 ] )
+		state = STACKER;
+	else if( vexRT[ Btn8RXmtr2 ] )
+		state = LOADER_LINEUP;
+	else if( vexRT[ Btn8UXmtr2 ] )
+		state = STAT;
+
+	stateRun( lastState );
+
+}
+
+void stateRun( enum stateControl lastState )
+{
+
+	if( lastState != state )
+	{
+
+		if( lastState == LOADER )
+			stopTask( stackLoaderTask );
+		if( lastState == STACKER )
+			stopTask( stackTask );
+
+	}
+
+	switch( state )
+	{
+
+		case MANUAL:
+
+			liftPIDEnabled = false;
+			chainbarPIDEnabled = false;
+
+			setIntake( vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 + 15 );
+
+			setChainbar( deadzone( vexRT[ Ch2Xmtr2 ] ) );
+			setLift( deadzone( vexRT[ Ch3Xmtr2 ] ) );
+
+		break;
+
+		case STACKER:
+
+			liftPIDEnabled = true;
+			chainbarPIDEnabled = true;
+
+			if( lastState != state )
+				stackCurrent();
+
+			if( vexRT[ Btn6DXmtr2 ] || vexRT[ Btn6UXmtr2 ] )
+				setIntake( vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 );
+
+		break;
+
+		case LOADER:
+
+			liftPIDEnabled = true;
+			chainbarPIDEnabled = true;
+
+			if( lastState != state )
+				loadCurrent();
+
+			if( vexRT[ Btn6DXmtr2 ] || vexRT[ Btn6UXmtr2 ] )
+				setIntake( vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 );
+
+		break;
+
+		case LOADER_LINEUP:
+
+			liftPIDEnabled = true;
+			chainbarPIDEnabled = true;
+
+			liftPIDValues.target = LIFT_LOADER_POS - 400;
+  		chainbarPIDValues.target = CHAINBAR_LOADER_POS;
+
+  		setIntake( vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 + 15 );
+
+		break;
+
+		case STAT:
+
+			liftPIDEnabled = false;
+			chainbarPIDEnabled = true;
+
+			setLift( deadzone( vexRT[ Ch3Xmtr2 ] ) );
+			setIntake( vexRT[ Btn6UXmtr2 ] * 127 - vexRT[ Btn6DXmtr2 ] * 127 + 15 );
+
+			if( lastState != state )
+				if( SensorValue[ chainbarPot ] > CHAINBAR_IDLE_UP_POS + ( -CHAINBAR_IDLE_UP_POS + CHAINBAR_SCORE_POS ) / 2 )
+					toggled2.b8U = false;
+				else
+					toggled2.b8U = true;
+
+			if( toggled2.b8U )
+				chainbarPIDValues.target = CHAINBAR_SCORE_POS;
+			else
+				chainbarPIDValues.target = CHAINBAR_STAT_POS;
+
+		break;
+
+	}
 
 }

@@ -58,10 +58,7 @@ task PIDLoop
 			chassisPID( );
 
 		if( liftPIDEnabled )
-		{
-
 			setLift( PIDCalc( liftPIDValues ) );
-		}
 
 		if( chainbarPIDEnabled )
 			setChainbar( PIDCalc( chainbarPIDValues ) + CHAINBAR_HOLD_POWER);

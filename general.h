@@ -49,6 +49,20 @@ float map( float value, float start1, float stop1, float start2, float stop2 )
 	return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
 
 }
+int gyroScale = 139;
+void calibrate()
+{
+
+	SensorType[ gyro ] = sensorNone;
+	wait1Msec(1000);
+	SensorType[ gyro ] = sensorGyro;
+	wait1Msec(1100);
+
+	SensorScale[gyro] = gyroScale;
+
+	SensorValue[ driveEncoder ] = 0;
+
+}
 
 /* Button-Related Code */
 

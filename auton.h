@@ -39,7 +39,7 @@ void redTwentyLeft(  )
 		wait1Msec( 500 );
 		setIntake( 15 );
 		setDriveTarget( 0, false );
-		autonStack( true );
+		autonStack( true, true );
 
 	}
 
@@ -53,7 +53,7 @@ void redTwentyLeft(  )
 	moveTurnTarget( 100, COUNTER_CLOCKWISE, false );
 	wait1Msec( 100 );
 	waitForPID( gyroPIDValues );
-	liftPIDValues.target = LIFT_HORIZONTAL_POS - 400;
+	//liftPIDValues.target = LIFT_HORIZONTAL_POS - 400;
 	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
 	chassisPIDEnabled = false;
 	setChassis( 127, 127 );
@@ -78,8 +78,6 @@ void redFiveLeft(  )
 	liftPIDValues.target = SensorValue[ LIFT_SENSOR ];
 	chainbarPIDValues.target = SensorValue[ chainbarPot ];
 	mogoPIDValues.target = SensorValue[ mogoPot ];
-	//setIntake( 127 );
-	//wait1Msec( 200 );
 	setIntake( 30 );
 	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
 	mogoPickup();
@@ -87,7 +85,7 @@ void redFiveLeft(  )
 	distancePIDValues.target = 1700;
 	while( SensorValue[ LIFT_SENSOR ] < LIFT_MIN_POS - 300 )
 		wait1Msec( 20 );
-	wait1Msec( 400 );
+	wait1Msec( 200 );
 	setIntake( -127 );
 	wait1Msec( 200 );
 	setIntake( 0 );
@@ -121,16 +119,13 @@ void redFiveLeft(  )
 		}
 
 		setDriveTarget( 2, false );
-		autonStack( true );
+		autonStack( true, true );
 
 	}
 	else
 		setDriveTarget( 2, false );
 
-	liftPIDValues.target = LIFT_HORIZONTAL_POS - 200;
-	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
-
-	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] > 150 )
+	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] > distancePIDValues.target + 8*CHASSIS_TICKS_PER_INCH )
 		wait1Msec( 20 );
 	setTurnTarget( 100, COUNTER_CLOCKWISE, false );
 	wait1Msec( 100 );
@@ -381,6 +376,7 @@ void blueFiveRightStat(  )
 	wait1Msec( 200 );
 
 	setIntake( -127 );
+	wait1Msec( 500 );
 
 	moveDriveTarget( -18, true );
 	moveTurnTarget( COUNTER_CLOCKWISE, 80, true );
@@ -388,6 +384,107 @@ void blueFiveRightStat(  )
 
 }
 
+void redFiveLeftStat(  )
+{
+
+	liftPIDEnabled = true;
+	chainbarPIDEnabled = true;
+	chassisPIDEnabled = true;
+	mogoPIDEnabled = true;
+	distancePIDEnabled = true;
+	turnPIDEnabled = true;
+	liftPIDValues.target = SensorValue[ LIFT_SENSOR ];
+	chainbarPIDValues.target = SensorValue[ chainbarPot ];
+	mogoPIDValues.target = SensorValue[ mogoPot ];
+	setIntake( 30 );
+	chainbarPIDValues.target = CHAINBAR_SCORE_POS;
+	mogoPickup();
+	liftPIDValues.target = LIFT_MIN_POS;
+	distancePIDValues.target = 1700;
+	while( SensorValue[ LIFT_SENSOR ] < LIFT_MIN_POS - 300 )
+		wait1Msec( 20 );
+	wait1Msec( 400 );
+	setIntake( -127 );
+	wait1Msec( 200 );
+	setIntake( 0 );
+	moveDriveTarget( 6, false );
+
+	if( SensorValue[ CHASSIS_DISTANCE_SENSOR ] < 2050 )
+	{
+
+		chainbarPIDValues.target = 400;
+		setIntake( 127 );
+		waitForPID( chainbarPIDValues );
+		setIntake( 30 );
+		setDriveTarget( 8, false );
+		chainbarPIDValues.target = CHAINBAR_IDLE_DOWN_POS;
+
+	}
+	else
+		setDriveTarget( 8, false );
+
+	liftPIDValues.target = LIFT_HORIZONTAL_POS - 200;
+
+	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] > distancePIDValues.target + 2*CHASSIS_TICKS_PER_INCH )
+		wait1Msec( 20 );
+	distancePIDEnabled = false;
+	sDistancePIDEnabled = true;
+	sDistancePIDValues.stuck = false;
+	sDistancePIDValues.stopped = false;
+	sDistancePIDValues.startStoppedTime = nPgmTime;
+	sDistancePIDValues.targetChangedTime = nPgmTime;
+	sDistancePIDValues.target = distancePIDValues.target;
+	waitForPID( sDistancePIDValues );
+	setTurnTarget( 129, COUNTER_CLOCKWISE, false );
+	wait1Msec( 100 );
+	waitForPID( gyroPIDValues );
+	mogoPIDValues.target = MOGO_DOWN_POS;
+	while( SensorValue[ mogoPot ] > MOGO_DOWN_POS + 1000 )
+		wait1Msec( 20 );
+	distancePIDEnabled = true;
+	sDistancePIDEnabled = false;
+	distancePIDValues.target -= 18 * CHASSIS_TICKS_PER_INCH;
+	wait1Msec( 100 );
+	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] > distancePIDValues.target + 2*CHASSIS_TICKS_PER_INCH )
+		wait1Msec( 20 );
+	distancePIDEnabled = false;
+	sDistancePIDEnabled = true;
+	sDistancePIDValues.stuck = false;
+	sDistancePIDValues.stopped = false;
+	sDistancePIDValues.startStoppedTime = nPgmTime;
+	sDistancePIDValues.targetChangedTime = nPgmTime;
+	sDistancePIDValues.target = distancePIDValues.target;
+	waitForPID( sDistancePIDValues );
+	distancePIDEnabled = true;
+	sDistancePIDEnabled = false;
+	moveTurnTarget( 75, COUNTER_CLOCKWISE, false );
+	wait1Msec( 100 );
+	while( abs( SensorValue[ gyro ] ) > abs( gyroPIDValues.target ) - 50 )
+		wait1Msec( 20 );
+	wait1Msec( 500 );
+
+	chainbarPIDValues.target = 122;
+	liftPIDValues.target = 1420;
+
+	distancePIDValues.target += 20 * CHASSIS_TICKS_PER_INCH;
+	wait1Msec( 100 );
+	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] < distancePIDValues.target - 4*CHASSIS_TICKS_PER_INCH )
+		wait1Msec( 20 );
+	wait1Msec( 200 );
+
+	liftPIDValues.target = 1600;
+	wait1Msec( 200 );
+
+	setIntake( -127 );
+	wait1Msec( 500 );
+
+	moveDriveTarget( -18, true );
+	moveTurnTarget( CLOCKWISE, 80, false );
+	wait1Msec( 100 );
+	waitForPID( gyroPIDValues );
+	moveDriveTarget( -24, true );
+
+}
 
 void blueTwentyRightOld(  )
 {
@@ -455,5 +552,47 @@ void blueTwentyRightOld(  )
 	mogoPIDValues.target = 1650;
 	wait1Msec( 700 );
 	moveDriveTarget( -50 );
+
+}
+
+void leftDefense()
+{
+
+	clearTimer(T3);
+
+	liftPIDEnabled = true;
+	chainbarPIDEnabled = true;
+	chassisPIDEnabled = true;
+	mogoPIDEnabled = true;
+	distancePIDEnabled = true;
+	turnPIDEnabled = true;
+	liftPIDValues.target = SensorValue[ LIFT_SENSOR ];
+	chainbarPIDValues.target = SensorValue[ chainbarPot ];
+	mogoPIDValues.target = SensorValue[ mogoPot ];
+
+	moveDriveTarget( -170, false );
+	while( !distancePIDValues.stuck )
+		wait1Msec( 20 );
+
+	distancePIDValues.target = SensorValue[ CHASSIS_DISTANCE_SENSOR ] - 3 * CHASSIS_TICKS_PER_INCH;
+
+	while( time1[T3] < 8000 )
+		wait1Msec( 20 );
+
+	moveDriveTarget( 15, false );
+	while( SensorValue[ CHASSIS_DISTANCE_SENSOR ] < distancePIDValues.target + 3 * CHASSIS_TICKS_PER_INCH )
+		wait1Msec( 20 );
+	gyroPIDValues.target = 1000;
+	wait1Msec( 100 );
+	waitForPID( gyroPIDValues );
+
+	moveDriveTarget( 80, false );
+
+}
+
+void rightDefense()
+{
+
+
 
 }
